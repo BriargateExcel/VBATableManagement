@@ -23,7 +23,7 @@ You need to create a class module for each table that implements the 14 interfac
 
 You will create a class module for each of your tables. I'll use Employees as an example table. In Excel, the Employee table looks like. Remember, this table could be in this workbook, another workbook, or in Access.
 
-![image-20200705115009571](./figures/employeetable.png)
+![](./Figures/EmployeeTable.png)
 
 At the top of the class module, private variables are declared and `Get/Let Properties` for each field.
 
