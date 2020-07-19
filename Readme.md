@@ -2,7 +2,7 @@
 
 Excel isn’t designed to be a database manager but many of us use Excel to store and manipulate lists. I’m personally very fond of Excel tables and I use a lot of them. Manipulating Excel tables from VBA can be a challenge. I’ve created some code that lets me convert a table into a VBA dictionary where it’s easier to manipulate and then copy the data back to the table.
 
-The table manipulation code is flexible. It can read/write tables to/from this workbook, other Excel workbooks, or Access. When this writeup describes the source or destination of the data,  "Table" can be an Excel table in this workbook, an Excel table in another workbook, or an Access table.
+The table manipulation code is flexible. It can read/write tables to/from this workbook, other Excel workbooks, or Access. When this writeup describes the source or destination of the data as a "Table",  "Table" can be an Excel table in this workbook, an Excel table in another workbook, or an Access table.
 
 I’ll describe the table manipulation process and show you how to create your own routines to manipulate your own tables. Each table has a code module and an associated class module. There is a pattern to both modules that I have automated into a TableBuilder code generator. I’ll describe the code generator in a separate write-up.
 
@@ -10,24 +10,24 @@ I’ll describe the table manipulation process and show you how to create your o
 
 There is a Table module that handles most of the heavy lifting. There is an interface class module (iTable) that provides an interface specification for each table. Table is written against the interfaces in iTable; this approach allows Table to be generic and manipulate any table regardless of the number of columns or rows and to read/write to/from any table.
 
-The Table module has two primary entrance points: TryCopyTableToDictionary and TryCopyDictionaryToTable. These are both Boolean functions that return True if they are successful. If they are unsuccessful, you can use the error handling techniques provided in https://github.com/BriargateExcel/Error_Handling. The term “Table” in the function names is general; the table can be an Excel table or a table in an Access database. For example, TryCopyTableToDictionary can copy an Excel table from this or another workbook or it can copy an Access table.
+The Table module has two primary entrance points: `TryCopyTableToDictionary` and `TryCopyDictionaryToTable`. These are both Boolean functions that return True if they are successful. If they are unsuccessful, you can use the error handling techniques provided in https://github.com/BriargateExcel/Error_Handling. The term “Table” in the function names is general; the table can be an Excel table or a table in an Access database. For example, `TryCopyTableToDictionary` can copy an Excel table from this or another workbook or it can copy an Access table.
 
 #### iTable Module
 
-iTable defines 14 routines that are key to making things work. By using iTable as an interface class, we can have many tables (as many as we want; I have an application with 24 tables; some of them are in the application workbook and the larger tables are in Access). Each of my tables has a basic and associated class module. The Table module is written against iTable. You need to define class modules that implement iTable.
+`iTable` defines 14 routines that are key to making things work. By using `iTable` as an interface class, we can have many tables (as many as we want; I have an application with 24 tables; some of them are in the application workbook and the larger tables are in Access). Each of my tables has a basic and associated class module. The `Table` module is written against `iTable`. You need to define class modules that implement `iTable`.
 If you’re not familiar with interface class modules, I recommend Google; I won’t be explaining them here
 
 #### Class Modules
 
-You need to create a class module for each table that implements the 14 interfaces in iTable. Each of these class modules is a pass-through to the code module. The class module stores minimal information about the table.
+You need to create a class module for each table that implements the 14 interfaces in `iTable`. Each of these class modules is a pass-through to the code module. The class module stores minimal information about the table.
 
-You will create a class module for each of your tables. I'll use Employees as an example table. In Excel, the Employee table looks like. Remember, this table could be in this workbook, another workbook, or in Access.
+You will create a class module for each of your tables. I'll use Employees as an example table. In Excel, the Employee table looks like the figure below. Remember, this table could be in this workbook, another workbook, or in Access.
 
-![](./Figures/EmployeeTable.png)
+![image-20200705115009571](./figures/employeetable.png)
 
-At the top of the class module, private variables are declared and `Get/Let Properties` for each field.
+At the top of the class module, private variables are declared and `Get/Let Properties` for each field are created.
 
-The routines in Employees_Table correspond with the routines in iTable:
+The routines in `Employees_Table` correspond with the routines in `iTable`:
 
 `iTable_LocalDictionary` calls `Employees.Dict` in the Employees basic module
 
@@ -53,11 +53,11 @@ The routines in Employees_Table correspond with the routines in iTable:
 
 `iTable_DatabaseName` returns `vbNullString` because this is an Excel table not an Access table
 
-I used my TableBuilder, described elsewhere, to build the basic and class modules for the Employees table. Employees.bas and  Employees_Table.cls are included in this folder.
+I used my `TableBuilder`, described elsewhere, to build the basic and class modules for the `Employees` table. `Employees.bas` and  `Employees_Table.cls` are included in this folder.
 
 #### Basic Module
 
-The basic module, Employees.bas in our case, does the work for the Employees table. Employees.bas is where the code for the 14 iTable interfaces lives. The elements of Employees.bas:
+The basic module, `Employees.bas` in our case, does the work for the `Employees` table. `Employees.bas` is where the code for the 14 `iTable` interfaces lives. The elements of `Employees.bas`:
 
 `PrivateType` defines three variables used throughout the module:
 
@@ -65,7 +65,7 @@ The basic module, Employees.bas in our case, does the work for the Employees tab
 
 `Dict` is the dictionary that holds the data in our Employees table. Referenced as `This.Dict`.
 
-`Wkbk` is the workbook where the Employees table lives. If it's an Access database, Wkbk is Nothing. Referenced as `This.Wkbk`.
+`Wkbk` is the workbook where the Employees table lives. If it's an Access database, `Wkbk` is Nothing. Referenced as `This.Wkbk`.
 
 The 5 constants correspond to the positions of each field in the table and the overall width of the table. There are Get properties for each field.
 
@@ -79,21 +79,21 @@ The next 3 constants are used if the table is in another workbook.
 
 `Get Initialized` specifies whether the dictionary has been populated
 
-`Initialize` populates the dictionary, `This.Dict`, from the Excel or Access table
+`Initialize` populates the dictionary, `This.Dict`, and sets `This.Initialized` to `True`
 
 `Reset` resets `This.Initialized` and sets `This.Dict` to nothing. Use `Reset` to ensure that the dictionary is re-populated from the table.
 
 `Get HeaderWidth` specifies the width of the table
 
-The next few `Get...FromEmployeeID` functions give you a way to use the key, Employee ID, to return specific elements for an employee.
+The next few `Get...FromEmployeeID` functions give you a way to use the key, `Employee ID`, to return specific elements for an employee.
 
 The `CreateKey` routine creates the key used in the dictionary, `This.Dict`. In this case, the key is one field. You can create keys from multiple fields if necessary.
 
-`TryCopyDictionaryToArray` copies `This.Dict` to an array. The Table module uses this during the `TryCopyDictionaryToTable` processing.
+`TryCopyDictionaryToArray` copies `This.Dict` to an array. The `Table` module uses this during the `TryCopyDictionaryToTable` processing.
 
 `TryCopyArrayToDictionary` copies an array to `This.Dict`. The Table module uses this during the `TryCopyTableToDictionary` processing.
 
-`CheckEmployeeIDExists` determines whether the key, Employee ID in our case, exists in `This.Dict`.
+`CheckEmployeeIDExists` determines whether the key, `Employee ID` in our case, exists in `This.Dict`.
 
 `FormatArrayAndWorksheet` is used during the Table's `TryCopyDictionaryToDictionary` processing to properly format the table. In our case, there is no special formatting required.
 
@@ -101,19 +101,19 @@ The `CreateKey` routine creates the key used in the dictionary, `This.Dict`. In 
 
 **Setup:**
 
-Create the table, EmployeesTable (above) in our case
+Create the table, `EmployeesTable` (above) in our case
 
 Add a reference to Microsoft Scripting Runtime to get the dictionary routines
 
 Add a reference to Microsoft Office 16.0 Access database engine Object to get the Access routines
 
-Set the CodeName for the worksheet containing the table to EmployeesSheet in our case
+Set the `CodeName` for the worksheet containing the table to `EmployeesSheet` in our case
 
-Create the Employees basic module and the Employees_Table class module.
+Create the `Employees` basic module and the `Employees_Table` class module.
 
 **Usage:**
 
-In your code, use Table.TryCopyTableToDictionary to copy the table to a VBA dictionary. This should look something like this:
+In your code, use `Table.TryCopyTableToDictionary` to copy the table to a VBA dictionary. This should look something like this:
 
 ```vba
     Dim Dict As Dictionary
@@ -126,7 +126,7 @@ In your code, use Table.TryCopyTableToDictionary to copy the table to a VBA dict
     End If
 ```
 
-Table defaults to using the table specified in the Employees module by calling the `LocalTable` routing in Employees_Table. The EmployeesTable is now loaded into `Dict`. You can now use VBA dictionary manipulation routines to manipulate the dictionary. For example:
+`Table` defaults to using the table specified in the `Employees` module by calling the `LocalTable` in `Employees_Table`. The `EmployeesTable` is now loaded into `Dict`. You can now use VBA dictionary manipulation routines to manipulate the dictionary. For example:
 
 ```vba
     Dim Entry As Variant
@@ -154,8 +154,8 @@ Charlie       Watts         EN-004        4/1/1963
 - Dictionary manipulation is faster than manipulating the table directly using ListObject
 - Dictionary manipulation is faster than retrieving data from an Access table
 - Dictionary is easier than manipulating the table directly using ListObject
-- In my opinion, using dictionary field names line `Employee.FirstName` is easier to read and understand than things like `Tbl.DataBodyRange`, `Tbl.ListColumns`, and `Tbl.ListRows`
+- In my opinion, using dictionary field names like `Employee.FirstName` is easier to read and understand than things like `Tbl.DataBodyRange`, `Tbl.ListColumns`, and `Tbl.ListRows`
 
 **Hmmmmmm...**
 
-Most of the code in Employees and Employees_Table is repetitious. Wouldn't it be nice if it were possible to automatically generate these routines?... See my TableBuilder writeup.
+Most of the code in `Employees` and `Employees_Table` is repetitious. Wouldn't it be nice if it were possible to automatically generate these routines?... See my `TableBuilder` writeup.
