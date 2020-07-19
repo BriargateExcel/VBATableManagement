@@ -6,6 +6,25 @@ The table manipulation code is flexible. It can read/write tables to/from this w
 
 I’ll describe the table manipulation process and show you how to create your own routines to manipulate your own tables. Each table has a code module and an associated class module. There is a pattern to both modules that I have automated into a TableBuilder code generator. I’ll describe the code generator in a separate write-up.
 
+#### How It Works
+This is the code you will write in your main program:
+```vba
+    Dim Dict As Dictionary
+    
+    Dim ET As Employees_Table
+    Set ET = New Employees_Table
+    
+    If Table.TryCopyTableToDictionary(ET, Dict) Then
+        ' Your processing
+    End If
+```
+In your main program, you will call `Table.TryCopyTableToDictionary` to copy data from your table to a VBA dictionary, `Dict`. The `Table` module calls `TableType.TryCopyArrayToDictionary`. In our example, `TableType` is `Employees_Table` (from `ET`). VBA uses `TableType` to determine which class module to call; in our example, this is `Employees_Table`. Specifically, this is `iTable_TryCopyArrayToDictionary` in `Employees_Table` which is a pass-through call to `Employees`. `Employees_Table` calls `TryCopyArrayToDictionary` in the `Employees` module.
+
+![](Figures/CallingSequence.png)
+It is important to note that `Table` and `iTable` know nothing about the structure (number of columns, column titles, etc.) about your table. `Table` and `iTable` are general purpose modules that can process any table. The particulars of your table are in the `Employees` module that you write. In other words, we can write `Table` and `iTable` once and then use them to process any table by writing the appropriate `Employees` and `Employees_Table` modules for your specific table. Plus, your main program knows nothing about where the data is stored. For example, I have an application where I moved ~15 tables from the primary Excel workbook to Access with no changes to my main program. The workbook shrunk from ~18MB to ~7 MB, stability improved, and the change was invisible to the users.
+
+This general purpose approach to `Table` and `iTable` is what allows this table management code to process tables stored in this workbook, another workbook, or in an Access database. The `Employees` module would need adjusting but `Table` and `iTable` are unchanged; your main program is unchanged. Note: there is code specific to Excel tables and Access databases in `Table` but the programmer's interface to them is unchanged. This flexibility allows you, as the designer, to move your tables from this workbook to another workbook to Access while making no changes to your main program. The only changes are in the modules like `Employees`.
+
 #### Table Module
 
 There is a Table module that handles most of the heavy lifting. There is an interface class module (iTable) that provides an interface specification for each table. Table is written against the interfaces in iTable; this approach allows Table to be generic and manipulate any table regardless of the number of columns or rows and to read/write to/from any table.
@@ -121,8 +140,8 @@ In your code, use `Table.TryCopyTableToDictionary` to copy the table to a VBA di
     Dim ET As Employees_Table
     Set ET = New Employees_Table
     
-    If Not Table.TryCopyTableToDictionary(ET, Dict) Then
-        
+    If Table.TryCopyTableToDictionary(ET, Dict) Then
+        ' Your code
     End If
 ```
 
@@ -153,7 +172,7 @@ Charlie       Watts         EN-004        4/1/1963
 
 - Dictionary manipulation is faster than manipulating the table directly using ListObject
 - Dictionary manipulation is faster than retrieving data from an Access table
-- Dictionary is easier than manipulating the table directly using ListObject
+- Dictionary manipulation is easier than manipulating the table directly using ListObject
 - In my opinion, using dictionary field names like `Employee.FirstName` is easier to read and understand than things like `Tbl.DataBodyRange`, `Tbl.ListColumns`, and `Tbl.ListRows`
 
 **Hmmmmmm...**
